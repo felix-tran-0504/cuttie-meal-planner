@@ -1,16 +1,17 @@
-import { Home, UtensilsCrossed, Lightbulb, Plus } from "lucide-react";
+import { Home, UtensilsCrossed, Lightbulb, Leaf } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 
 const navItems = [
   { to: "/", icon: Home, label: "Home" },
   { to: "/log", icon: UtensilsCrossed, label: "Log" },
+  { to: "/ingredients", icon: Leaf, label: "Ingredients" },
   { to: "/suggestions", icon: Lightbulb, label: "Ideas" },
 ];
 
 export function BottomNav() {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-card/80 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-lg items-center justify-around px-2 py-2">
+      <div className="mx-auto flex max-w-screen-2xl items-center justify-around px-2 py-2">
         {navItems.map((item) => (
           <NavLink
             key={item.to}
