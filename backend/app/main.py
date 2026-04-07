@@ -11,7 +11,7 @@ app = FastAPI(title="Meal Planner API", version="1.0.0")
 # CORS middleware to allow frontend connections
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:8081"],  # Vite dev server
+    allow_origins=["http://localhost:8081"],  # frontend dev server
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

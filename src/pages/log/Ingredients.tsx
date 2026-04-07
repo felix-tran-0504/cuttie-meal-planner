@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { apiService, Ingredient } from "@/services/api";
 import { Button } from "@/components/ui/button";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import {
   Card,
   CardContent,
@@ -21,13 +31,20 @@ import { AddIngredientDialog } from "@/components/AddIngredientDialog";
 
 export function Ingredients() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingIngredients, setLoadingIngredients] = useState(true);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 8;
+  const totalPages = Math.max(1, Math.ceil(ingredients.length / pageSize));
+  const paginatedIngredients = ingredients.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize,
+  );
 
   const fetchIngredients = async () => {
     try {
-      setLoading(true);
+      setLoadingIngredients(true);
       const data = await apiService.getIngredients();
       setIngredients(data);
     } catch (error) {
@@ -36,7 +53,7 @@ export function Ingredients() {
         `Error: ${error instanceof Error ? error.message : "Unknown error"}`
       );
     } finally {
-      setLoading(false);
+      setLoadingIngredients(false);
     }
   };
 
@@ -44,11 +61,15 @@ export function Ingredients() {
     fetchIngredients();
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [ingredients]);
+
   const handleDelete = async (id: number) => {
     try {
       setDeleting(true);
       await apiService.deleteIngredient(id);
-      setIngredients(ingredients.filter((ing) => ing.id !== id));
+      setIngredients((current) => current.filter((ingredient) => ingredient.id !== id));
       setDeleteId(null);
     } catch (error) {
       console.error("Failed to delete ingredient:", error);
@@ -62,30 +83,33 @@ export function Ingredients() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Ingredients</h1>
-            <p className="text-muted-foreground mt-2">
-              Manage your ingredient database ({ingredients.length} total)
-            </p>
-          </div>
-          <AddIngredientDialog onIngredientAdded={fetchIngredients}>
-            <Button size="lg">+ Add Ingredient</Button>
+      <div className="max-w-6xl mx-auto space-y-8">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-3">
+          <h1 className="text-3xl font-bold">Ingredients</h1>
+          <p className="text-muted-foreground">
+            Manage your ingredient database and nutrition values per 100g.
+          </p>
+        </div>
+
+        <AddIngredientDialog onIngredientAdded={fetchIngredients}>
+            <Button size="lg" className="rounded-xl">
+              + Add Ingredient
+            </Button>
           </AddIngredientDialog>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center items-center h-64">
+        {loadingIngredients ? (
+          <div className="text-center py-8">
             <p className="text-muted-foreground">Loading ingredients...</p>
           </div>
         ) : ingredients.length === 0 ? (
-          <div className="flex justify-center items-center h-64">
+          <div className="text-center py-8">
             <p className="text-muted-foreground text-lg">No ingredients yet</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
-            {ingredients.map((ingredient) => (
+            {paginatedIngredients.map((ingredient) => (
               <Card key={ingredient.id} className="flex flex-col">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg">{ingredient.name}</CardTitle>
@@ -99,27 +123,19 @@ export function Ingredients() {
                   <div className="grid grid-cols-2 gap-3 text-sm mb-4">
                     <div className="bg-muted p-2 rounded">
                       <p className="text-muted-foreground text-xs">Calories</p>
-                      <p className="font-semibold">
-                        {ingredient.calories_per_100g}
-                      </p>
+                      <p className="font-semibold">{ingredient.calories_per_100g}</p>
                     </div>
                     <div className="bg-muted p-2 rounded">
                       <p className="text-muted-foreground text-xs">Protein</p>
-                      <p className="font-semibold">
-                        {ingredient.protein_per_100g}g
-                      </p>
+                      <p className="font-semibold">{ingredient.protein_per_100g}g</p>
                     </div>
                     <div className="bg-muted p-2 rounded">
                       <p className="text-muted-foreground text-xs">Carbs</p>
-                      <p className="font-semibold">
-                        {ingredient.carbs_per_100g}g
-                      </p>
+                      <p className="font-semibold">{ingredient.carbs_per_100g}g</p>
                     </div>
                     <div className="bg-muted p-2 rounded">
                       <p className="text-muted-foreground text-xs">Fat</p>
-                      <p className="font-semibold">
-                        {ingredient.fat_per_100g}g
-                      </p>
+                      <p className="font-semibold">{ingredient.fat_per_100g}g</p>
                     </div>
                   </div>
                 </CardContent>
@@ -137,6 +153,42 @@ export function Ingredients() {
             ))}
           </div>
         )}
+
+        {ingredients.length > pageSize && (
+          <Pagination className="mt-6">
+            <PaginationPrevious
+              onClick={() => setCurrentPage((current) => Math.max(1, current - 1))}
+              aria-disabled={currentPage === 1}
+              className={currentPage === 1 ? "opacity-50 pointer-events-none" : undefined}
+            />
+            <PaginationContent>
+              {Array.from({ length: totalPages }, (_, index) => {
+                const pageNumber = index + 1;
+                return (
+                  <PaginationItem key={pageNumber}>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(pageNumber)}
+                      isActive={currentPage === pageNumber}
+                    >
+                      {pageNumber}
+                    </PaginationLink>
+                  </PaginationItem>
+                );
+              })}
+            </PaginationContent>
+            <PaginationNext
+              onClick={() => setCurrentPage((current) => Math.min(totalPages, current + 1))}
+              aria-disabled={currentPage === totalPages}
+              className={currentPage === totalPages ? "opacity-50 pointer-events-none" : undefined}
+            />
+          </Pagination>
+        )}
+
+        <div className="flex justify-end">
+          <Link to="/log" className="inline-flex items-center rounded-full border border-border bg-background px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground">
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+          </Link>
+        </div>
       </div>
 
       <AlertDialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>

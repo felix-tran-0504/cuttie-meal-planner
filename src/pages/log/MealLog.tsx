@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Plus, Search } from "lucide-react";
+import { ArrowLeft, Plus, Search } from "lucide-react";
 import { MealCard } from "@/components/MealCard";
 import { AddMealDialog } from "@/components/AddMealDialog";
 import { Button } from "@/components/ui/button";
@@ -45,10 +46,12 @@ export default function MealLog() {
 
   return (
     <div className="flex flex-col gap-6 pb-6">
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-heading font-extrabold">Meal Log</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Track everything you eat</p>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-3">
+          <div>
+            <h1 className="text-2xl font-heading font-extrabold">Meal Log</h1>
+            <p className="text-muted-foreground text-sm mt-0.5">Track everything you eat</p>
+          </div>
         </div>
         <AddMealDialog onMealAdded={fetchMeals}>
           <Button size="sm" className="rounded-xl gap-1.5">
@@ -100,6 +103,11 @@ export default function MealLog() {
           </div>
         </>
       )}
+      <div className="flex justify-end">
+        <Link to="/log" className="inline-flex items-center rounded-full border border-border bg-background px-3 py-2 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground">
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back
+        </Link>
+      </div>
     </div>
   );
 }

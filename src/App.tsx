@@ -5,9 +5,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/AppLayout";
 import Dashboard from "./pages/Dashboard";
-import MealLog from "./pages/MealLog";
+import Log from "./pages/Log";
+import MealLog from "./pages/log/MealLog";
+import { Ingredients } from "./pages/log/Ingredients";
 import Suggestions from "./pages/Suggestions";
-import { Ingredients } from "./pages/Ingredients";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,9 +22,10 @@ const App = () => (
         <AppLayout>
           <Routes>
             <Route path="/" element={<Dashboard />} />
-            <Route path="/log" element={<MealLog />} />
+            <Route path="/log" element={<Log />} />
+            <Route path="/log/meals" element={<MealLog />} />
+            <Route path="/log/ingredients" element={<Ingredients />} />
             <Route path="/suggestions" element={<Suggestions />} />
-            <Route path="/ingredients" element={<Ingredients />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AppLayout>
