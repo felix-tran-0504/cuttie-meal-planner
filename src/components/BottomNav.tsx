@@ -1,10 +1,10 @@
-import { Home, UtensilsCrossed, Lightbulb, Leaf } from "lucide-react";
+import { Home, UtensilsCrossed, Lightbulb, Leaf, Clock } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 
 const navItems = [
   { to: "/", icon: Home, label: "Home" },
   { to: "/log", icon: UtensilsCrossed, label: "Log" },
-  { to: "/ingredients", icon: Leaf, label: "Ingredients" },
+  { to: "/history", icon: Clock, label: "History" },
   { to: "/suggestions", icon: Lightbulb, label: "Ideas" },
 ];
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Plus, Search } from "lucide-react";
-import { MealCard } from "@/components/MealCard";
+import { MealLogCard } from "@/components/MealLogCard";
 import { AddMealDialog } from "@/components/AddMealDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,25 +32,13 @@ export default function MealLog() {
     meal.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const todaysMeals = filteredMeals.filter((meal) => {
-    const today = new Date().toDateString();
-    const mealDate = new Date(meal.created_at).toDateString();
-    return mealDate === today;
-  });
-
-  const yesterdayMeals = filteredMeals.filter((meal) => {
-    const yesterday = new Date(Date.now() - 86400000).toDateString();
-    const mealDate = new Date(meal.created_at).toDateString();
-    return mealDate === yesterday;
-  });
-
   return (
     <div className="flex flex-col gap-6 pb-6">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
           <div>
             <h1 className="text-2xl font-heading font-extrabold">Meal Log</h1>
-            <p className="text-muted-foreground text-sm mt-0.5">Track everything you eat</p>
+            <p className="text-muted-foreground text-sm mt-0.5">Compose dishes from ingredients and quantities, with optional recipe notes.</p>
           </div>
         </div>
         <AddMealDialog onMealAdded={fetchMeals}>
@@ -77,27 +65,14 @@ export default function MealLog() {
       ) : (
         <>
           <div>
-            <h2 className="font-heading font-bold text-sm text-muted-foreground mb-3">Today</h2>
+            
             <div className="flex flex-col gap-3">
-              {todaysMeals.length > 0 ? (
-                todaysMeals.map((meal) => (
-                  <MealCard key={meal.id} meal={meal} />
+              {filteredMeals.length > 0 ? (
+                filteredMeals.map((meal) => (
+                  <MealLogCard key={meal.id} meal={meal} />
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-8">No meals logged today</p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <h2 className="font-heading font-bold text-sm text-muted-foreground mb-3">Yesterday</h2>
-            <div className="flex flex-col gap-3">
-              {yesterdayMeals.length > 0 ? (
-                yesterdayMeals.map((meal) => (
-                  <MealCard key={meal.id} meal={meal} />
-                ))
-              ) : (
-                <p className="text-sm text-muted-foreground text-center py-8">No meals logged yesterday</p>
               )}
             </div>
           </div>

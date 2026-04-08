@@ -1,19 +1,45 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { MacroRing } from "@/components/MacroRing";
 import { MealCard } from "@/components/MealCard";
-import { todaysMeals, macroGoals } from "@/data/mockData";
-
-const totals = todaysMeals.reduce(
-  (acc, m) => ({
-    calories: acc.calories + m.calories,
-    protein: acc.protein + m.protein,
-    carbs: acc.carbs + m.carbs,
-    fat: acc.fat + m.fat,
-  }),
-  { calories: 0, protein: 0, carbs: 0, fat: 0 }
-);
+import { apiService, Meal } from "@/services/api";
+import { macroGoals } from "@/data/mockData";
 
 export default function Dashboard() {
+  const [meals, setMeals] = useState<Meal[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMeals = async () => {
+      try {
+        const fetchedMeals = await apiService.getMeals();
+        setMeals(fetchedMeals);
+      } catch (error) {
+        console.error("Failed to fetch meals:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMeals();
+  }, []);
+
+  const todaysMeals = meals.filter((meal) => {
+    const today = new Date().toDateString();
+    const mealDate = new Date(meal.created_at).toDateString();
+    return mealDate === today;
+  });
+
+  const totals = todaysMeals.reduce(
+    (acc, m) => ({
+      calories: acc.calories + m.calories,
+      protein: acc.protein + m.protein,
+      carbs: acc.carbs + m.carbs,
+      fat: acc.fat + m.fat,
+    }),
+    { calories: 0, protein: 0, carbs: 0, fat: 0 }
+  );
+
   return (
     <div className="flex flex-col gap-6 pb-6">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -41,9 +67,15 @@ export default function Dashboard() {
       <div>
         <h2 className="font-heading font-bold text-sm text-muted-foreground mb-3">Today's Meals</h2>
         <div className="flex flex-col gap-3">
-          {todaysMeals.map((meal) => (
-            <MealCard key={meal.id} meal={meal} />
-          ))}
+          {loading ? (
+            <p className="text-sm text-muted-foreground text-center py-8">Loading meals...</p>
+          ) : todaysMeals.length > 0 ? (
+            todaysMeals.map((meal) => (
+              <MealCard key={meal.id} meal={meal} />
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-8">No meals logged today</p>
+          )}
         </div>
       </div>
     </div>

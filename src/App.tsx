@@ -10,6 +10,7 @@ import MealLog from "./pages/log/MealLog";
 import { Ingredients } from "./pages/log/Ingredients";
 import Suggestions from "./pages/Suggestions";
 import NotFound from "./pages/NotFound";
+import History from "./pages/History";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/log" element={<Log />} />
             <Route path="/log/meals" element={<MealLog />} />
             <Route path="/log/ingredients" element={<Ingredients />} />
+            <Route path="/history" element={<History />} />
             <Route path="/suggestions" element={<Suggestions />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
