@@ -1,81 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap");
+@import "./globals.css";
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@layer base {
-  :root {
-    --background: 40 33% 97%;
-    --foreground: 150 10% 15%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 150 10% 15%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 150 10% 15%;
-
-    --primary: 142 44% 42%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 40 30% 93%;
-    --secondary-foreground: 150 10% 25%;
-
-    --muted: 40 20% 94%;
-    --muted-foreground: 150 5% 50%;
-
-    --accent: 16 80% 62%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 72% 55%;
-    --destructive-foreground: 0 0% 100%;
-
-    --border: 40 15% 90%;
-    --input: 40 15% 90%;
-    --ring: 142 44% 42%;
-
-    --radius: 1rem;
-
-    --protein: 262 52% 58%;
-    --carbs: 38 92% 55%;
-    --fat: 16 80% 62%;
-    --calories: 142 44% 42%;
-
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-
-    --font-heading: 'Nunito', sans-serif;
-    --font-body: 'DM Sans', sans-serif;
-  }
-
-  .dark {
-    --background: 150 10% 8%;
-    --foreground: 40 20% 95%;
-    --card: 150 10% 12%;
-    --card-foreground: 40 20% 95%;
-    --popover: 150 10% 12%;
-    --popover-foreground: 40 20% 95%;
-    --primary: 142 44% 48%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 150 10% 16%;
-    --secondary-foreground: 40 20% 90%;
-    --muted: 150 8% 18%;
-    --muted-foreground: 40 10% 60%;
-    --accent: 16 80% 58%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 150 8% 20%;
-    --input: 150 8% 20%;
-    --ring: 142 44% 48%;
-  }
-}
 
 @layer base {
   * {
@@ -85,7 +13,12 @@
     @apply bg-background text-foreground;
     font-family: var(--font-body);
   }
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-heading);
   }
 }

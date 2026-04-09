@@ -1,26 +1,58 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from . import models, schemas
 
+
+def _meal_query(db: Session):
+    return db.query(models.Meal).options(
+        joinedload(models.Meal.ingredients).joinedload(models.MealIngredient.ingredient)
+    )
+
+
 def get_meals(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Meal).offset(skip).limit(limit).all()
+    return _meal_query(db).offset(skip).limit(limit).all()
+
 
 def get_meal(db: Session, meal_id: int):
-    return db.query(models.Meal).filter(models.Meal.id == meal_id).first()
+    return _meal_query(db).filter(models.Meal.id == meal_id).first()
+
 
 def create_meal(db: Session, meal: schemas.MealCreate):
-    db_meal = models.Meal(**meal.model_dump())
+    data = meal.model_dump(exclude={"ingredients"})
+    db_meal = models.Meal(**data)
     db.add(db_meal)
+    db.flush()
+    if meal.ingredients:
+        for line in meal.ingredients:
+            db.add(
+                models.MealIngredient(
+                    meal_id=db_meal.id,
+                    ingredient_id=line.ingredient_id,
+                    amount_grams=line.amount_grams,
+                )
+            )
     db.commit()
-    db.refresh(db_meal)
-    return db_meal
+    return get_meal(db, db_meal.id)
+
 
 def update_meal(db: Session, meal_id: int, meal: schemas.MealCreate):
-    db_meal = db.query(models.Meal).filter(models.Meal.id == meal_id).first()
+    db_meal = _meal_query(db).filter(models.Meal.id == meal_id).first()
     if db_meal:
-        for key, value in meal.model_dump().items():
+        for key, value in meal.model_dump(exclude={"ingredients"}).items():
             setattr(db_meal, key, value)
+        if meal.ingredients is not None:
+            db.query(models.MealIngredient).filter(
+                models.MealIngredient.meal_id == meal_id
+            ).delete(synchronize_session=False)
+            for line in meal.ingredients:
+                db.add(
+                    models.MealIngredient(
+                        meal_id=meal_id,
+                        ingredient_id=line.ingredient_id,
+                        amount_grams=line.amount_grams,
+                    )
+                )
         db.commit()
-        db.refresh(db_meal)
+        return get_meal(db, meal_id)
     return db_meal
 
 def delete_meal(db: Session, meal_id: int):

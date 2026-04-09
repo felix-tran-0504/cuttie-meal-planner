@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, Text
+from sqlalchemy import Column, Integer, String, DateTime, Float, Text, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
 
@@ -14,6 +15,24 @@ class Meal(Base):
     fat = Column(Float)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    ingredients = relationship(
+        "MealIngredient",
+        back_populates="meal",
+        cascade="all, delete-orphan",
+    )
+
+
+class MealIngredient(Base):
+    __tablename__ = "meal_ingredients"
+
+    id = Column(Integer, primary_key=True, index=True)
+    meal_id = Column(Integer, ForeignKey("meals.id"), nullable=False)
+    ingredient_id = Column(Integer, ForeignKey("ingredients.id"), nullable=False)
+    amount_grams = Column(Float, nullable=False)
+
+    meal = relationship("Meal", back_populates="ingredients")
+    ingredient = relationship("Ingredient")
 
 
 class Ingredient(Base):

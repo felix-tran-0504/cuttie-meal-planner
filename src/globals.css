@@ -1,0 +1,104 @@
+/**
+ * Cuttie Meal Planner — global design tokens
+ *
+ * Semantic colors use HSL components (no hsl() wrapper) for Tailwind: hsl(var(--token)).
+ * Layout tokens use explicit units; reference in components via var(--layout-*).
+ */
+
+:root {
+  /* —— Semantic colors (aligned with tailwind.config theme.extend.colors) —— */
+  --background: 40 33% 97%;
+  --foreground: 150 10% 15%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 150 10% 15%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 150 10% 15%;
+
+  --primary: 142 44% 42%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 40 30% 93%;
+  --secondary-foreground: 150 10% 25%;
+
+  --muted: 40 20% 94%;
+  --muted-foreground: 150 5% 50%;
+
+  /* Interactive hovers (buttons outline/ghost, menus, cmdk): aligned with secondary, not orange */
+  --accent: 40 30% 93%;
+  --accent-foreground: 150 10% 25%;
+
+  --destructive: 0 72% 55%;
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 40 15% 90%;
+  --input: 40 15% 90%;
+  --ring: 142 44% 42%;
+
+  --radius: 1rem;
+
+  /* Macro accent colors (charts, rings, labels) */
+  --protein: 262 52% 58%;
+  --carbs: 38 92% 55%;
+  --fat: 16 80% 62%;
+  --calories: 142 44% 42%;
+
+  /* Sidebar (shadcn sidebar tokens) */
+  --sidebar-background: 0 0% 98%;
+  --sidebar-foreground: 240 5.3% 26.1%;
+  --sidebar-primary: 240 5.9% 10%;
+  --sidebar-primary-foreground: 0 0% 98%;
+  --sidebar-accent: 240 4.8% 95.9%;
+  --sidebar-accent-foreground: 240 5.9% 10%;
+  --sidebar-border: 220 13% 91%;
+  --sidebar-ring: 217.2 91.2% 59.8%;
+
+  /* Typography */
+  --font-heading: "Nunito", sans-serif;
+  --font-body: "DM Sans", sans-serif;
+
+  /* —— Layout —— */
+  --layout-max-width: 1536px;
+  --layout-page-padding-x: 1.5rem;
+  --layout-page-padding-top: 1.5rem;
+  --layout-page-padding-bottom: 6rem;
+  --layout-stack-gap: 1.5rem;
+  --layout-section-gap: 1.5rem;
+  --layout-card-padding: 1rem;
+  --layout-card-padding-lg: 1.5rem;
+  --layout-radius-card: var(--radius);
+  --layout-radius-input: calc(var(--radius) - 2px);
+
+  /* Stacking (popover inside dialog uses higher than modal shell) */
+  --layout-z-dropdown: 50;
+  --layout-z-modal: 50;
+  --layout-z-popover: 100;
+  --layout-z-toast: 200;
+
+  /* Safe areas (notch / home indicator) */
+  --layout-safe-top: env(safe-area-inset-top, 0px);
+  --layout-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.dark {
+  --background: 150 10% 8%;
+  --foreground: 40 20% 95%;
+  --card: 150 10% 12%;
+  --card-foreground: 40 20% 95%;
+  --popover: 150 10% 12%;
+  --popover-foreground: 40 20% 95%;
+  --primary: 142 44% 48%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 150 10% 16%;
+  --secondary-foreground: 40 20% 90%;
+  --muted: 150 8% 18%;
+  --muted-foreground: 40 10% 60%;
+  --accent: 150 10% 16%;
+  --accent-foreground: 40 20% 90%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 150 8% 20%;
+  --input: 150 8% 20%;
+  --ring: 142 44% 48%;
+}

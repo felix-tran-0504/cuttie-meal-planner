@@ -1,26 +1,5 @@
 const API_BASE_URL = 'http://localhost:8000/api/v1';
 
-export interface Meal {
-  id: number;
-  name: string;
-  description?: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  created_at: string;
-  updated_at?: string;
-}
-
-export interface CreateMealRequest {
-  name: string;
-  description?: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-}
-
 export interface Ingredient {
   id: number;
   name: string;
@@ -31,6 +10,34 @@ export interface Ingredient {
   fat_per_100g: number;
   created_at: string;
   updated_at?: string;
+}
+
+export interface MealIngredientLine {
+  amount_grams: number;
+  ingredient: Ingredient;
+}
+
+export interface Meal {
+  id: number;
+  name: string;
+  description?: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  created_at: string;
+  updated_at?: string;
+  ingredients?: MealIngredientLine[];
+}
+
+export interface CreateMealRequest {
+  name: string;
+  description?: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  ingredients?: { ingredient_id: number; amount_grams: number }[];
 }
 
 export interface CreateIngredientRequest {

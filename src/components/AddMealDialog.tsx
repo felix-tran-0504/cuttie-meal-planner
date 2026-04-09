@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { Check, ChevronsUpDown } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 import { apiService, CreateMealRequest, Ingredient } from "@/services/api";
 
 const mealSchema = z.object({
@@ -32,12 +44,86 @@ type MealFormData = z.infer<typeof mealSchema>;
 
 type SelectedIngredient = {
   ingredientId: number;
-  amount: number;
+  /** Empty string while the user clears the field; otherwise grams. */
+  amount: number | "";
 };
 
 interface AddMealDialogProps {
   onMealAdded: () => void;
   children: React.ReactNode;
+}
+
+function IngredientCombobox({
+  ingredients,
+  value,
+  onChange,
+}: {
+  ingredients: Ingredient[];
+  value: number;
+  onChange: (ingredientId: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = ingredients.find((i) => i.id === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="h-10 w-full justify-between px-3 font-normal"
+        >
+          <span className="truncate text-left">{selected?.name ?? "Select ingredient"}</span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent
+        className="z-[var(--layout-z-popover)] w-[var(--radix-popover-trigger-width)] overflow-hidden border-border p-0 shadow-md"
+        align="start"
+        onWheel={(e) => e.stopPropagation()}
+      >
+        <Command className="flex max-h-[min(320px,55vh)] flex-col overflow-hidden rounded-lg bg-popover">
+          <CommandInput placeholder="Search ingredients…" className="h-9 shrink-0" />
+          <CommandList className="max-h-none overflow-hidden p-0">
+            <ScrollArea
+              className="h-[min(220px,42vh)] w-full"
+              type="hover"
+              onWheel={(e) => e.stopPropagation()}
+            >
+              <CommandEmpty className="py-6 text-muted-foreground">No ingredient found.</CommandEmpty>
+              <CommandGroup className="p-1">
+                {ingredients.map((ing) => (
+                  <CommandItem
+                    key={ing.id}
+                    value={ing.name}
+                    keywords={[ing.name, ing.description ?? ""]}
+                    onSelect={() => {
+                      onChange(ing.id);
+                      setOpen(false);
+                    }}
+                    className={cn(
+                      "rounded-md data-[selected=true]:bg-secondary data-[selected=true]:text-secondary-foreground",
+                      "data-[selected=true]:[&_svg]:text-primary"
+                    )}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4 shrink-0",
+                        value === ing.id ? "text-primary opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {ing.name}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </ScrollArea>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 export function AddMealDialog({ onMealAdded, children }: AddMealDialogProps) {
@@ -81,11 +167,12 @@ export function AddMealDialog({ onMealAdded, children }: AddMealDialogProps) {
   const totals = selectedIngredients.reduce(
     (acc, item) => {
       const ingredient = ingredients.find((ingredient) => ingredient.id === item.ingredientId);
-      if (!ingredient || item.amount <= 0) {
+      const grams = item.amount === "" ? 0 : item.amount;
+      if (!ingredient || grams <= 0) {
         return acc;
       }
 
-      const factor = item.amount / 100;
+      const factor = grams / 100;
       return {
         calories: acc.calories + ingredient.calories_per_100g * factor,
         protein: acc.protein + ingredient.protein_per_100g * factor,
@@ -122,9 +209,10 @@ export function AddMealDialog({ onMealAdded, children }: AddMealDialogProps) {
   };
 
   const onSubmit = async (data: MealFormData) => {
-    const hasValidIngredient = selectedIngredients.some(
-      (item) => item.amount > 0 && ingredients.some((ingredient) => ingredient.id === item.ingredientId)
-    );
+    const hasValidIngredient = selectedIngredients.some((item) => {
+      const grams = item.amount === "" ? 0 : item.amount;
+      return grams > 0 && ingredients.some((ingredient) => ingredient.id === item.ingredientId);
+    });
 
     if (!hasValidIngredient) {
       alert("Add at least one ingredient with a positive amount.");
@@ -141,6 +229,15 @@ export function AddMealDialog({ onMealAdded, children }: AddMealDialogProps) {
         protein: Number(totals.protein.toFixed(1)),
         carbs: Number(totals.carbs.toFixed(1)),
         fat: Number(totals.fat.toFixed(1)),
+        ingredients: selectedIngredients
+          .filter((item) => {
+            const grams = item.amount === "" ? 0 : item.amount;
+            return grams > 0 && ingredients.some((ingredient) => ingredient.id === item.ingredientId);
+          })
+          .map((item) => ({
+            ingredient_id: item.ingredientId,
+            amount_grams: item.amount === "" ? 0 : item.amount,
+          })),
       };
 
       await apiService.createMeal(mealData);
@@ -210,21 +307,13 @@ export function AddMealDialog({ onMealAdded, children }: AddMealDialogProps) {
                     <div key={`${item.ingredientId}-${index}`} className="grid gap-3 sm:grid-cols-[2fr_1fr_auto]">
                       <label className="space-y-1">
                         <span className="text-xs font-medium text-muted-foreground">Ingredient</span>
-                        <select
-                          className="block h-10 w-full rounded-md border border-input bg-background px-3 text-sm transition focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/10"
+                        <IngredientCombobox
+                          ingredients={ingredients}
                           value={item.ingredientId}
-                          onChange={(event) =>
-                            updateSelectedIngredient(index, {
-                              ingredientId: Number(event.target.value),
-                            })
+                          onChange={(ingredientId) =>
+                            updateSelectedIngredient(index, { ingredientId })
                           }
-                        >
-                          {ingredients.map((ingredient) => (
-                            <option key={ingredient.id} value={ingredient.id}>
-                              {ingredient.name}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       </label>
 
                       <label className="space-y-1">
@@ -232,12 +321,23 @@ export function AddMealDialog({ onMealAdded, children }: AddMealDialogProps) {
                         <Input
                           type="number"
                           min={0}
-                          value={item.amount}
-                          onChange={(event) =>
-                            updateSelectedIngredient(index, {
-                              amount: Number(event.target.value) || 0,
-                            })
-                          }
+                          value={item.amount === "" ? "" : item.amount}
+                          onChange={(event) => {
+                            const v = event.target.value;
+                            if (v === "") {
+                              updateSelectedIngredient(index, { amount: "" });
+                              return;
+                            }
+                            const n = parseFloat(v);
+                            if (!Number.isNaN(n)) {
+                              updateSelectedIngredient(index, { amount: n });
+                            }
+                          }}
+                          onBlur={() => {
+                            if (item.amount === "") {
+                              updateSelectedIngredient(index, { amount: 0 });
+                            }
+                          }}
                         />
                       </label>
 

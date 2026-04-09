@@ -57,10 +57,10 @@ export default function Dashboard() {
       >
         <h2 className="font-heading font-bold text-sm text-muted-foreground mb-4">Macro Overview</h2>
         <div className="flex justify-around">
-          <MacroRing label="Calories" current={totals.calories} goal={macroGoals.calories} unit="kcal" colorClass="text-calories" size={85} />
-          <MacroRing label="Protein" current={totals.protein} goal={macroGoals.protein} unit="g" colorClass="text-protein" />
-          <MacroRing label="Carbs" current={totals.carbs} goal={macroGoals.carbs} unit="g" colorClass="text-carbs" />
-          <MacroRing label="Fat" current={totals.fat} goal={macroGoals.fat} unit="g" colorClass="text-fat" />
+          <MacroRing label="Calories" current={Math.ceil(totals.calories)} goal={macroGoals.calories} unit="kcal" colorClass="text-calories" size={85} />
+          <MacroRing label="Protein" current={Math.ceil(totals.protein)} goal={macroGoals.protein} unit="g" colorClass="text-protein" />
+          <MacroRing label="Carbs" current={Math.ceil(totals.carbs)} goal={macroGoals.carbs} unit="g" colorClass="text-carbs" />
+          <MacroRing label="Fat" current={Math.ceil(totals.fat)} goal={macroGoals.fat} unit="g" colorClass="text-fat" />
         </div>
       </motion.div>
 

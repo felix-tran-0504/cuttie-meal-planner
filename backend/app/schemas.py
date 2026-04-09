@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 class MealBase(BaseModel):
     name: str
@@ -10,13 +10,29 @@ class MealBase(BaseModel):
     carbs: float
     fat: float
 
+
+class MealIngredientCreate(BaseModel):
+    ingredient_id: int
+    amount_grams: float
+
+
 class MealCreate(MealBase):
-    pass
+    ingredients: Optional[List[MealIngredientCreate]] = None
+
+
+class MealIngredientRead(BaseModel):
+    amount_grams: float
+    ingredient: "Ingredient"
+
+    class Config:
+        from_attributes = True
+
 
 class Meal(MealBase):
     id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
+    ingredients: List[MealIngredientRead] = []
 
     class Config:
         from_attributes = True
@@ -40,3 +56,7 @@ class Ingredient(IngredientBase):
 
     class Config:
         from_attributes = True
+
+
+# Resolve forward reference for nested MealIngredientRead
+MealIngredientRead.model_rebuild()

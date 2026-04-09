@@ -1,12 +1,16 @@
 import { motion } from "framer-motion";
 import { Meal } from "@/services/api";
+import { MealDetailDialog } from "@/components/MealDetailDialog";
 
 export function MealLogCard({ meal }: { meal: Meal }) {
   return (
+    <MealDetailDialog meal={meal}>
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-center gap-3 rounded-2xl bg-card p-4 shadow-sm border"
+      className="flex cursor-pointer items-center gap-3 rounded-2xl border bg-card p-4 shadow-sm transition-colors hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      role="button"
+      tabIndex={0}
     >
       <div className="flex-1 min-w-0">
         <h3 className="font-heading font-bold text-sm truncate">{meal.name}</h3>
@@ -35,5 +39,6 @@ export function MealLogCard({ meal }: { meal: Meal }) {
         </div>
       </div>
     </motion.div>
+    </MealDetailDialog>
   );
 }
