@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Float, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Float, Text, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
@@ -13,6 +13,8 @@ class Meal(Base):
     protein = Column(Float)
     carbs = Column(Float)
     fat = Column(Float)
+    photo_urls = Column(JSON, nullable=True)
+    eaten_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

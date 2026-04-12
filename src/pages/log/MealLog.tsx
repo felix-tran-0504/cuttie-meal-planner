@@ -1,32 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Plus, Search } from "lucide-react";
 import { MealLogCard } from "@/components/MealLogCard";
 import { AddMealDialog } from "@/components/AddMealDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { apiService, Meal } from "@/services/api";
+import { apiService } from "@/services/api";
+import { mealsQueryKey } from "@/lib/queryKeys";
 
 export default function MealLog() {
-  const [meals, setMeals] = useState<Meal[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
 
-  const fetchMeals = async () => {
-    try {
-      const fetchedMeals = await apiService.getMeals();
-      setMeals(fetchedMeals);
-    } catch (error) {
-      console.error("Failed to fetch meals:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchMeals();
-  }, []);
+  const { data: meals = [], isLoading: loading } = useQuery({
+    queryKey: mealsQueryKey,
+    queryFn: () => apiService.getMeals(),
+  });
 
   const filteredMeals = meals.filter((meal) =>
     meal.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -41,7 +31,7 @@ export default function MealLog() {
             <p className="text-muted-foreground text-sm mt-0.5">Compose dishes from ingredients and quantities, with optional recipe notes.</p>
           </div>
         </div>
-        <AddMealDialog onMealAdded={fetchMeals}>
+        <AddMealDialog>
           <Button size="sm" className="rounded-xl gap-1.5">
             <Plus className="h-4 w-4" /> Add Meal
           </Button>

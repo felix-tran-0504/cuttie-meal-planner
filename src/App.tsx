@@ -12,7 +12,14 @@ import Suggestions from "./pages/Suggestions";
 import NotFound from "./pages/NotFound";
 import History from "./pages/History";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      /** Keep cached data (e.g. dish suggestions after navigating away) for a day. */
+      gcTime: 1000 * 60 * 60 * 24,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

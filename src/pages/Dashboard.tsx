@@ -1,32 +1,24 @@
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import { MacroRing } from "@/components/MacroRing";
-import { MealCard } from "@/components/MealCard";
-import { apiService, Meal } from "@/services/api";
+import { MealLogCard } from "@/components/MealLogCard";
+import { LogSavedMealDialog } from "@/components/LogSavedMealDialog";
+import { Button } from "@/components/ui/button";
+import { apiService } from "@/services/api";
+import { getMealEatenAtDate } from "@/lib/mealTime";
+import { mealsQueryKey } from "@/lib/queryKeys";
 import { macroGoals } from "@/data/mockData";
 
 export default function Dashboard() {
-  const [meals, setMeals] = useState<Meal[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchMeals = async () => {
-      try {
-        const fetchedMeals = await apiService.getMeals();
-        setMeals(fetchedMeals);
-      } catch (error) {
-        console.error("Failed to fetch meals:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMeals();
-  }, []);
+  const { data: meals = [], isLoading: loading } = useQuery({
+    queryKey: mealsQueryKey,
+    queryFn: () => apiService.getMeals(),
+  });
 
   const todaysMeals = meals.filter((meal) => {
     const today = new Date().toDateString();
-    const mealDate = new Date(meal.created_at).toDateString();
+    const mealDate = getMealEatenAtDate(meal).toDateString();
     return mealDate === today;
   });
 
@@ -57,7 +49,7 @@ export default function Dashboard() {
       >
         <h2 className="font-heading font-bold text-sm text-muted-foreground mb-4">Macro Overview</h2>
         <div className="flex justify-around">
-          <MacroRing label="Calories" current={Math.ceil(totals.calories)} goal={macroGoals.calories} unit="kcal" colorClass="text-calories" size={85} />
+          <MacroRing label="Calories" current={Math.round(totals.calories)} goal={macroGoals.calories} unit="kcal" colorClass="text-calories" size={85} />
           <MacroRing label="Protein" current={Math.ceil(totals.protein)} goal={macroGoals.protein} unit="g" colorClass="text-protein" />
           <MacroRing label="Carbs" current={Math.ceil(totals.carbs)} goal={macroGoals.carbs} unit="g" colorClass="text-carbs" />
           <MacroRing label="Fat" current={Math.ceil(totals.fat)} goal={macroGoals.fat} unit="g" colorClass="text-fat" />
@@ -65,13 +57,20 @@ export default function Dashboard() {
       </motion.div>
 
       <div>
-        <h2 className="font-heading font-bold text-sm text-muted-foreground mb-3">Today's Meals</h2>
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2 className="font-heading font-bold text-sm text-muted-foreground">Today's Meals</h2>
+          <LogSavedMealDialog>
+            <Button size="sm" className="rounded-xl gap-1.5 w-full sm:w-auto">
+              <Plus className="h-4 w-4" /> Add Meal
+            </Button>
+          </LogSavedMealDialog>
+        </div>
         <div className="flex flex-col gap-3">
           {loading ? (
             <p className="text-sm text-muted-foreground text-center py-8">Loading meals...</p>
           ) : todaysMeals.length > 0 ? (
             todaysMeals.map((meal) => (
-              <MealCard key={meal.id} meal={meal} />
+              <MealLogCard key={meal.id} meal={meal} showTime />
             ))
           ) : (
             <p className="text-sm text-muted-foreground text-center py-8">No meals logged today</p>

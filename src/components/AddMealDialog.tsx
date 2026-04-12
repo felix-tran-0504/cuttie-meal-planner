@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, ImagePlus, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -33,7 +33,15 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
 import { apiService, CreateMealRequest, Ingredient } from "@/services/api";
+import { mealsQueryKey } from "@/lib/queryKeys";
+import {
+  fromDateAndTimeToIso,
+  roundToFiveMinutes,
+  toDateInputValue,
+  toTimeInputValue,
+} from "@/lib/mealTime";
 
 const mealSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -49,7 +57,8 @@ type SelectedIngredient = {
 };
 
 interface AddMealDialogProps {
-  onMealAdded: () => void;
+  /** Optional; meal lists also refresh via shared query cache invalidation. */
+  onMealAdded?: () => void;
   children: React.ReactNode;
 }
 
@@ -127,12 +136,18 @@ function IngredientCombobox({
 }
 
 export function AddMealDialog({ onMealAdded, children }: AddMealDialogProps) {
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [selectedIngredients, setSelectedIngredients] = useState<SelectedIngredient[]>([]);
   const [loadingIngredients, setLoadingIngredients] = useState(true);
   const [ingredientsError, setIngredientsError] = useState<string | null>(null);
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [photoUrlDraft, setPhotoUrlDraft] = useState("");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [eatenDate, setEatenDate] = useState(() => toDateInputValue(roundToFiveMinutes(new Date())));
+  const [eatenTime, setEatenTime] = useState(() => toTimeInputValue(roundToFiveMinutes(new Date())));
 
   const form = useForm<MealFormData>({
     resolver: zodResolver(mealSchema),
@@ -163,6 +178,13 @@ export function AddMealDialog({ onMealAdded, children }: AddMealDialogProps) {
 
     fetchIngredients();
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    const n = roundToFiveMinutes(new Date());
+    setEatenDate(toDateInputValue(n));
+    setEatenTime(toTimeInputValue(n));
+  }, [open]);
 
   const totals = selectedIngredients.reduce(
     (acc, item) => {
@@ -208,6 +230,21 @@ export function AddMealDialog({ onMealAdded, children }: AddMealDialogProps) {
     setSelectedIngredients((current) => current.filter((_, i) => i !== index));
   };
 
+  const addPhotoUrlFromDraft = () => {
+    const s = photoUrlDraft.trim();
+    if (!s) return;
+    try {
+      const u = new URL(s);
+      if (u.protocol !== "http:" && u.protocol !== "https:") {
+        throw new Error("invalid");
+      }
+      setPhotoUrls((prev) => [...prev, s]);
+      setPhotoUrlDraft("");
+    } catch {
+      alert("Enter a valid http(s) image URL.");
+    }
+  };
+
   const onSubmit = async (data: MealFormData) => {
     const hasValidIngredient = selectedIngredients.some((item) => {
       const grams = item.amount === "" ? 0 : item.amount;
@@ -225,10 +262,11 @@ export function AddMealDialog({ onMealAdded, children }: AddMealDialogProps) {
       const mealData: CreateMealRequest = {
         name: data.name,
         description: data.recipe?.trim() || undefined,
-        calories: Number(totals.calories.toFixed(1)),
+        calories: Math.round(totals.calories),
         protein: Number(totals.protein.toFixed(1)),
         carbs: Number(totals.carbs.toFixed(1)),
         fat: Number(totals.fat.toFixed(1)),
+        eaten_at: fromDateAndTimeToIso(eatenDate, eatenTime),
         ingredients: selectedIngredients
           .filter((item) => {
             const grams = item.amount === "" ? 0 : item.amount;
@@ -239,11 +277,17 @@ export function AddMealDialog({ onMealAdded, children }: AddMealDialogProps) {
             amount_grams: item.amount === "" ? 0 : item.amount,
           })),
       };
+      if (photoUrls.length > 0) {
+        mealData.photo_urls = photoUrls;
+      }
 
       await apiService.createMeal(mealData);
-      onMealAdded();
+      await queryClient.invalidateQueries({ queryKey: mealsQueryKey });
+      onMealAdded?.();
       setOpen(false);
       form.reset();
+      setPhotoUrls([]);
+      setPhotoUrlDraft("");
       setSelectedIngredients(ingredients.length > 0 ? [{ ingredientId: ingredients[0].id, amount: 100 }] : []);
     } catch (error) {
       console.error("Failed to add meal:", error);
@@ -256,7 +300,7 @@ export function AddMealDialog({ onMealAdded, children }: AddMealDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="flex w-[calc(100%-1.5rem)] min-h-[50vh] max-h-[90vh] flex-col gap-4 overflow-y-auto p-8 sm:min-w-[50vw] sm:max-w-5xl">
         <DialogHeader>
           <DialogTitle>Add New Dish</DialogTitle>
           <DialogDescription>
@@ -278,6 +322,119 @@ export function AddMealDialog({ onMealAdded, children }: AddMealDialogProps) {
                 </FormItem>
               )}
             />
+
+            <div className="space-y-2">
+              <p className="text-sm font-medium leading-none">When did you eat this?</p>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground" htmlFor="meal-eaten-date">
+                    Date
+                  </label>
+                  <Input
+                    id="meal-eaten-date"
+                    type="date"
+                    value={eatenDate}
+                    onChange={(e) => setEatenDate(e.target.value)}
+                    className="w-full min-w-0 sm:w-[11rem]"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-muted-foreground" htmlFor="meal-eaten-time">
+                    Time
+                  </label>
+                  <Input
+                    id="meal-eaten-time"
+                    type="time"
+                    step={300}
+                    value={eatenTime}
+                    onChange={(e) => setEatenTime(e.target.value)}
+                    className="w-full min-w-0 sm:w-[8.5rem]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3 rounded-xl border bg-muted/50 p-4">
+              <div>
+                <p className="text-sm font-medium">Photos (optional)</p>
+                <p className="text-xs text-muted-foreground">
+                  Add image URLs or upload files (JPEG, PNG, WebP, GIF — max 5MB each).
+                </p>
+              </div>
+              {photoUrls.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {photoUrls.map((url, index) => (
+                    <div
+                      key={`${url}-${index}`}
+                      className="relative h-20 w-28 shrink-0 overflow-hidden rounded-lg border bg-background"
+                    >
+                      <img src={url} alt="" className="h-full w-full object-cover" />
+                      <button
+                        type="button"
+                        className="absolute right-1 top-1 rounded-full bg-background/90 p-0.5 shadow hover:bg-destructive hover:text-destructive-foreground"
+                        onClick={() => setPhotoUrls((prev) => prev.filter((_, i) => i !== index))}
+                        aria-label="Remove photo"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                <label className="space-y-1 sm:flex-1">
+                  <span className="text-xs font-medium text-muted-foreground">Image URL</span>
+                  <Input
+                    type="url"
+                    placeholder="https://…"
+                    value={photoUrlDraft}
+                    onChange={(e) => setPhotoUrlDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addPhotoUrlFromDraft();
+                      }
+                    }}
+                  />
+                </label>
+                <Button type="button" variant="secondary" className="shrink-0" onClick={addPhotoUrlFromDraft}>
+                  Add URL
+                </Button>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploadingPhoto}
+                  className="gap-1.5"
+                  onClick={() => document.getElementById("meal-photo-file")?.click()}
+                >
+                  <ImagePlus className="h-4 w-4" />
+                  {uploadingPhoto ? "Uploading…" : "Upload from device"}
+                </Button>
+                <input
+                  id="meal-photo-file"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!file) return;
+                    setUploadingPhoto(true);
+                    try {
+                      const url = await apiService.uploadMealPhoto(file);
+                      setPhotoUrls((prev) => [...prev, url]);
+                    } catch (err) {
+                      alert(err instanceof Error ? err.message : "Upload failed");
+                    } finally {
+                      setUploadingPhoto(false);
+                    }
+                  }}
+                />
+              </div>
+            </div>
 
             <div className="space-y-3 rounded-xl border bg-muted/50 p-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -358,7 +515,7 @@ export function AddMealDialog({ onMealAdded, children }: AddMealDialogProps) {
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-xl border bg-background p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Calories</p>
-                <p className="mt-2 text-2xl font-semibold">{Number(totals.calories.toFixed(0))}</p>
+                <p className="mt-2 text-2xl font-semibold">{Math.round(totals.calories)}</p>
               </div>
               <div className="rounded-xl border bg-background p-4">
                 <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Protein</p>

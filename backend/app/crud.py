@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from sqlalchemy.orm import Session, joinedload
 from . import models, schemas
 
@@ -18,6 +20,8 @@ def get_meal(db: Session, meal_id: int):
 
 def create_meal(db: Session, meal: schemas.MealCreate):
     data = meal.model_dump(exclude={"ingredients"})
+    if data.get("eaten_at") is None:
+        data["eaten_at"] = datetime.now(timezone.utc)
     db_meal = models.Meal(**data)
     db.add(db_meal)
     db.flush()

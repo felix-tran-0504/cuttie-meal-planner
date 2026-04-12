@@ -89,7 +89,7 @@ export function AddIngredientDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="flex w-[calc(100%-1.5rem)] min-h-[50vh] max-h-[90vh] flex-col gap-4 overflow-y-auto p-8 sm:min-w-[min(50vw,42rem)] sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Add New Ingredient</DialogTitle>
           <DialogDescription>

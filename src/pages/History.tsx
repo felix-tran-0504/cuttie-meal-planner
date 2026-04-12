@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { MealCard } from "@/components/MealCard";
 import { apiService, Meal } from "@/services/api";
+import { getMealEatenAtDate } from "@/lib/mealTime";
+import { mealsQueryKey } from "@/lib/queryKeys";
 
 function groupMealsByDay(meals: Meal[]): Record<string, Meal[]> {
   return meals.reduce((groups, meal) => {
-    const day = new Date(meal.created_at).toDateString();
+    const day = getMealEatenAtDate(meal).toDateString();
     return {
       ...groups,
       [day]: [...(groups[day] ?? []), meal],
@@ -23,23 +25,10 @@ function formatDayLabel(dateString: string): string {
 }
 
 export default function History() {
-  const [meals, setMeals] = useState<Meal[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchMeals = async () => {
-      try {
-        const fetchedMeals = await apiService.getMeals();
-        setMeals(fetchedMeals);
-      } catch (error) {
-        console.error("Failed to fetch meals:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMeals();
-  }, []);
+  const { data: meals = [], isLoading: loading } = useQuery({
+    queryKey: mealsQueryKey,
+    queryFn: () => apiService.getMeals(),
+  });
 
   const mealsByDay = groupMealsByDay(meals);
   const sortedDays = Object.keys(mealsByDay).sort(

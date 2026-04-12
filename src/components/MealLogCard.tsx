@@ -1,44 +1,61 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Meal } from "@/services/api";
-import { MealDetailDialog } from "@/components/MealDetailDialog";
+import { Dialog, DialogTrigger } from "@/components/ui/dialog";
+import { MealDetailPanel } from "@/components/MealDetailDialog";
+import { MealDeleteButton } from "@/components/MealDeleteButton";
+import { MacroInlineSummary } from "@/components/MacroInlineSummary";
+import { formatMealLoggedTime } from "@/lib/utils";
 
-export function MealLogCard({ meal }: { meal: Meal }) {
+export function MealLogCard({
+  meal,
+  showTime = false,
+}: {
+  meal: Meal;
+  /** When true (e.g. Today on Home), show eaten/logged time under the meal name. */
+  showTime?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const loggedAt = showTime ? formatMealLoggedTime(meal.eaten_at ?? meal.created_at) : null;
+
   return (
-    <MealDetailDialog meal={meal}>
-    <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="flex cursor-pointer items-center gap-3 rounded-2xl border bg-card p-4 shadow-sm transition-colors hover:bg-accent/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      role="button"
-      tabIndex={0}
-    >
-      <div className="flex-1 min-w-0">
-        <h3 className="font-heading font-bold text-sm truncate">{meal.name}</h3>
-        {meal.description ? (
-          <p className="mt-1 text-xs text-muted-foreground line-clamp-2">
-            {meal.description}
-          </p>
-        ) : null}
+    <Dialog open={open} onOpenChange={setOpen}>
+      <div className="relative rounded-2xl border bg-card shadow-sm transition-colors hover:bg-accent/30">
+        <DialogTrigger asChild>
+          <button
+            type="button"
+            className="absolute inset-0 z-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            aria-label={`View details: ${meal.name}`}
+          />
+        </DialogTrigger>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="pointer-events-none relative z-10 flex cursor-default items-center gap-3 p-4"
+        >
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-secondary text-2xl">
+            🍽️
+          </div>
+          <div className="min-w-0 flex-1">
+            <h3 className="truncate font-heading text-sm font-bold">{meal.name}</h3>
+            {loggedAt ? (
+              <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">{loggedAt}</p>
+            ) : null}
+          </div>
+          <MacroInlineSummary
+            calories={meal.calories}
+            protein={meal.protein}
+            carbs={meal.carbs}
+            fat={meal.fat}
+          />
+          <MealDeleteButton
+            mealId={meal.id}
+            mealName={meal.name}
+            className="pointer-events-auto h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+          />
+        </motion.div>
       </div>
-      <div className="flex gap-3 text-[11px] text-muted-foreground font-medium">
-        <div className="flex flex-col items-center">
-          <span className="text-calories font-bold text-sm">{meal.calories}</span>
-          <span>kcal</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-protein font-bold text-sm">{meal.protein}g</span>
-          <span>P</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-carbs font-bold text-sm">{meal.carbs}g</span>
-          <span>C</span>
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-fat font-bold text-sm">{meal.fat}g</span>
-          <span>F</span>
-        </div>
-      </div>
-    </motion.div>
-    </MealDetailDialog>
+      {open ? <MealDetailPanel meal={meal} /> : null}
+    </Dialog>
   );
 }

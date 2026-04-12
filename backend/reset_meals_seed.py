@@ -37,10 +37,18 @@ def compute_totals(db, lines: list[tuple[str, float]]) -> tuple[dict[str, float]
 
 
 # Demo meals: only use ingredient names that exist in seed_ingredients.COMMON_INGREDIENTS
+# "recipe" is stored as Meal.description (same field as Add Dish → Recipe / notes).
 DEMO_MEALS: list[dict] = [
     {
         "name": "Greek Yogurt & Oats Bowl",
-        "description": "Cold oats with yogurt and fruit.",
+        "photo_urls": [
+            "https://images.unsplash.com/photo-1488477181946-6428a029177b?w=800&q=80",
+        ],
+        "recipe": """Combine oats and Greek yogurt in a bowl.
+
+Slice the banana on top. Serve cold—add a drizzle of honey if you like.
+
+Prep: 3 min · No cooking.""",
         "lines": [
             ("Greek Yogurt", 130),
             ("Oats", 45),
@@ -49,7 +57,16 @@ DEMO_MEALS: list[dict] = [
     },
     {
         "name": "Chicken Rice Bowl",
-        "description": "Grilled chicken with rice and greens.",
+        "photo_urls": [
+            "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=800&q=80",
+        ],
+        "recipe": """Season chicken and pan-sear until cooked through (165°F internal).
+
+Steam or microwave broccoli until bright green and tender.
+
+Warm the rice. Toss broccoli with olive oil, salt, and pepper.
+
+Layer rice, sliced chicken, and broccoli in a bowl. Serve hot.""",
         "lines": [
             ("Chicken Breast", 145),
             ("Brown Rice", 190),
@@ -59,7 +76,16 @@ DEMO_MEALS: list[dict] = [
     },
     {
         "name": "Salmon & Sweet Potato",
-        "description": "Baked salmon with roasted sweet potato and spinach.",
+        "photo_urls": [
+            "https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&q=80",
+        ],
+        "recipe": """Roast sweet potato cubes at 400°F until caramelized, ~25 min.
+
+Season salmon and bake or pan-sear skin-side down until flaky.
+
+Wilt spinach in the same pan with a splash of water.
+
+Plate salmon over sweet potato with spinach on the side.""",
         "lines": [
             ("Salmon", 170),
             ("Sweet Potato", 150),
@@ -68,7 +94,14 @@ DEMO_MEALS: list[dict] = [
     },
     {
         "name": "Turkey Sandwich Plate",
-        "description": "Open-faced turkey with veg.",
+        "photo_urls": [
+            "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=800&q=80",
+        ],
+        "recipe": """Toast bread lightly.
+
+Warm sliced turkey if desired. Layer turkey, tomato, and spinach.
+
+Season with salt and pepper. Open-faced or top with second slice—your call.""",
         "lines": [
             ("Turkey Breast", 95),
             ("Whole Wheat Bread", 55),
@@ -78,7 +111,14 @@ DEMO_MEALS: list[dict] = [
     },
     {
         "name": "Egg & Fruit Snack",
-        "description": "Boiled egg, apple, and almonds.",
+        "photo_urls": [
+            "https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&q=80",
+        ],
+        "recipe": """Hard-boil eggs: cover with water, boil 8–10 min, then ice bath.
+
+Slice apple and egg. Portion almonds.
+
+Arrange on a plate—simple protein + fiber snack.""",
         "lines": [
             ("Egg", 100),
             ("Apple", 140),
@@ -100,11 +140,12 @@ def seed_demo_meals(db) -> None:
         totals, resolved = compute_totals(db, demo["lines"])
         meal_in = schemas.MealCreate(
             name=demo["name"],
-            description=demo["description"],
+            description=demo["recipe"].strip(),
             calories=round(totals["calories"], 1),
             protein=round(totals["protein"], 1),
             carbs=round(totals["carbs"], 1),
             fat=round(totals["fat"], 1),
+            photo_urls=demo.get("photo_urls"),
             ingredients=[
                 schemas.MealIngredientCreate(ingredient_id=iid, amount_grams=grams)
                 for iid, grams in resolved
