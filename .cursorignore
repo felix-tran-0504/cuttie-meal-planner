@@ -1,0 +1,5 @@
+# Keep secrets out of Cursor indexing / AI context
+.env
+backend/.env
+**/.env.local
+**/.env.*.local

@@ -3,19 +3,24 @@ from sqlalchemy.orm import Session
 
 from .. import crud, schemas
 from ..database import get_db
+from ..security.rate_limit import enforce_suggestions_rate_limit
 from ..settings import get_settings
 from ..suggestions_llm import suggest_dishes_from_ingredients
 
 router = APIRouter()
 
 
-@router.post("/suggestions/dishes", response_model=schemas.DishSuggestionsResponse)
+@router.post(
+    "/suggestions/dishes",
+    response_model=schemas.DishSuggestionsResponse,
+    dependencies=[Depends(enforce_suggestions_rate_limit)],
+)
 def create_dish_suggestions(
     body: schemas.DishSuggestionRequest | None = None,
     db: Session = Depends(get_db),
 ):
     settings = get_settings()
-    key = (settings.openai_api_key or "").strip()
+    key = settings.openai_key_plain()
     if not key:
         raise HTTPException(
             status_code=503,

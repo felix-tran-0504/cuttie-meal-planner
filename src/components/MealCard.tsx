@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { Meal } from "@/services/api";
 import { MacroInlineSummary } from "@/components/MacroInlineSummary";
-import { MealDeleteButton } from "@/components/MealDeleteButton";
 import { formatMealLoggedTime } from "@/lib/utils";
 
 export function MealCard({ meal }: { meal: Meal }) {
@@ -27,11 +26,6 @@ export function MealCard({ meal }: { meal: Meal }) {
         protein={meal.protein}
         carbs={meal.carbs}
         fat={meal.fat}
-      />
-      <MealDeleteButton
-        mealId={meal.id}
-        mealName={meal.name}
-        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
       />
     </motion.div>
   );

@@ -12,6 +12,17 @@ dist
 dist-ssr
 *.local
 
+# Secrets and local env (never commit real keys)
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# User-uploaded meal photos (optional — uncomment if you do not want uploads in git)
+# backend/static/uploads/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

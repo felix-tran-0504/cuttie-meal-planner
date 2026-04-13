@@ -4,9 +4,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from .database import engine, Base
+from .middleware.security_headers import SecurityHeadersMiddleware
 from .routers import meals, ingredients, suggestions
+from .settings import get_settings
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -31,25 +34,46 @@ BACKEND_DIR = Path(__file__).resolve().parent.parent
 STATIC_DIR = BACKEND_DIR / "static"
 (STATIC_DIR / "uploads").mkdir(parents=True, exist_ok=True)
 
-app = FastAPI(title="Meal Planner API", version="1.0.0")
+_settings = get_settings()
+_is_production = _settings.environment.lower().strip() == "production"
 
-# CORS middleware to allow frontend connections
+app = FastAPI(
+    title="Meal Planner API",
+    version="1.0.0",
+    docs_url=None if _is_production else "/docs",
+    redoc_url=None if _is_production else "/redoc",
+    openapi_url=None if _is_production else "/openapi.json",
+)
+
+_cors_origins = [
+    o.strip() for o in _settings.allowed_origins.split(",") if o.strip()
+] or ["http://localhost:8081"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8081"],
+    allow_origins=_cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=[],
 )
+
+_trusted = [h.strip() for h in _settings.trusted_hosts.split(",") if h.strip()]
+if _trusted:
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=_trusted)
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 app.include_router(meals.router, prefix="/api/v1", tags=["meals"])
 app.include_router(ingredients.router, prefix="/api/v1", tags=["ingredients"])
 app.include_router(suggestions.router, prefix="/api/v1", tags=["suggestions"])
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
+
 @app.get("/")
 async def root():
     return {"message": "Welcome to Meal Planner API"}
+
 
 @app.get("/health")
 async def health_check():

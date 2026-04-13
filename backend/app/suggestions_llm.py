@@ -30,7 +30,7 @@ def suggest_dishes_from_ingredients(ingredient_names: list[str], count: int = 5)
     with id, name, emoji, macros, description, tags, servings, times, ingredients, steps.
     """
     settings = get_settings()
-    key = (settings.openai_api_key or "").strip()
+    key = settings.openai_key_plain()
     if not key:
         raise RuntimeError("OPENAI_API_KEY is not set")
 

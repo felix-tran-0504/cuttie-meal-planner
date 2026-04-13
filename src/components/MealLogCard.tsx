@@ -10,10 +10,13 @@ import { formatMealLoggedTime } from "@/lib/utils";
 export function MealLogCard({
   meal,
   showTime = false,
+  showDelete = false,
 }: {
   meal: Meal;
   /** When true (e.g. Today on Home), show eaten/logged time under the meal name. */
   showTime?: boolean;
+  /** When true (Meal Log page), show delete action button. */
+  showDelete?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const loggedAt = showTime ? formatMealLoggedTime(meal.eaten_at ?? meal.created_at) : null;
@@ -48,11 +51,13 @@ export function MealLogCard({
             carbs={meal.carbs}
             fat={meal.fat}
           />
-          <MealDeleteButton
-            mealId={meal.id}
-            mealName={meal.name}
-            className="pointer-events-auto h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
-          />
+          {showDelete ? (
+            <MealDeleteButton
+              mealId={meal.id}
+              mealName={meal.name}
+              className="pointer-events-auto h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+            />
+          ) : null}
         </motion.div>
       </div>
       {open ? <MealDetailPanel meal={meal} /> : null}

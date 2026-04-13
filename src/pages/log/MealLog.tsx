@@ -59,7 +59,7 @@ export default function MealLog() {
             <div className="flex flex-col gap-3">
               {filteredMeals.length > 0 ? (
                 filteredMeals.map((meal) => (
-                  <MealLogCard key={meal.id} meal={meal} />
+                  <MealLogCard key={meal.id} meal={meal} showDelete />
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-8">No meals logged today</p>
